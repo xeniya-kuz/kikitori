@@ -1,20 +1,29 @@
 import { useEffect, useRef } from 'react';
 import { StatusBar, StyleSheet, View, Platform } from 'react-native';
 import { WebView } from 'react-native-webview';
+import type { WebViewMessageEvent } from 'react-native-webview';
 import * as Speech from 'expo-speech';
+import type { Voice } from 'expo-speech';
 import html from './html';
 
-const isJa = (v) => /^ja([-_]|$)/i.test(v.language || '');
+// react-native-webview 14.0.1 declares `WebView<P = undefined>`, which collapses its props to `never`
+// under strict mode. Passing `object` explicitly restores normal prop typing.
+type WebViewRef = WebView<object>;
+
+// Some platforms may report this flag even though the typings do not declare it.
+type JaVoice = Voice & { networkConnectionRequired?: boolean };
+
+const isJa = (v: Voice) => /^ja([-_]|$)/i.test(v.language || '');
 
 export default function App() {
-  const web = useRef(null);
-  const jaVoice = useRef(null);
+  const web = useRef<WebViewRef>(null);
+  const jaVoice = useRef<JaVoice | null>(null);
   const checked = useRef(false);
 
   const checkVoices = async () => {
     try {
       const voices = await Speech.getAvailableVoicesAsync();
-      const ja = voices.filter(isJa);
+      const ja: JaVoice[] = voices.filter(isJa);
       jaVoice.current = ja.find((v) => !v.networkConnectionRequired) || ja[0] || null;
       checked.current = true;
       web.current?.injectJavaScript(
@@ -25,7 +34,7 @@ export default function App() {
 
   useEffect(() => { checkVoices(); }, []);
 
-  const onMessage = (e) => {
+  const onMessage = (e: WebViewMessageEvent) => {
     let msg;
     try { msg = JSON.parse(e.nativeEvent.data); } catch { return; }
     if (msg.type !== 'speak') return;
@@ -43,8 +52,8 @@ export default function App() {
 
   return (
     <View style={styles.root}>
-      <StatusBar barStyle="light-content" backgroundColor="#0A0B16" />
-      <WebView
+      <StatusBar barStyle="light-content" />
+      <WebView<object>
         ref={web}
         originWhitelist={['*']}
         source={{ html, baseUrl: 'https://kikitori.local' }}

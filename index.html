@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Numbers by Ear</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Zen+Kaku+Gothic+New:wght@500;700&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0A0B16;
+      --card: #12142A;
+      --card-2: #181B38;
+      --stroke: rgba(139, 125, 255, .22);
+      --ink: #EEF0FF;
+      --muted: #8D93B8;
+      --violet: #8B5CF6;
+      --cyan: #22E6D0;
+      --pink: #FF4D9D;
+      --field: #0E1024;
+      color-scheme: dark;
+      box-sizing: border-box;
+      padding-top: env(safe-area-inset-top, 0px);
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+    }
+
+    html {
+      scroll-padding-top: env(safe-area-inset-top, 0px);
+      background: var(--bg)
+    }
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: inherit
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      background:
+        radial-gradient(600px 320px at 85% -80px, rgba(139, 92, 246, .28), transparent 70%),
+        radial-gradient(520px 300px at -10% 30%, rgba(34, 230, 208, .10), transparent 70%),
+        var(--bg);
+      background-attachment: fixed;
+      font-family: "Space Grotesk", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      font-size: 16px;
+      line-height: 1.45;
+      -webkit-text-size-adjust: 100%;
+    }
+
+    .jpf {
+      font-family: "Zen Kaku Gothic New", "Hiragino Sans", "Yu Gothic", "Noto Sans JP", sans-serif
+    }
+
+    .wrap {
+      max-width: 520px;
+      margin: 0 auto;
+      padding: 20px 16px 40px
+    }
+
+    .top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 16px
+    }
+
+    h1 {
+      font-size: 1.45rem;
+      font-weight: 700;
+      margin: 0;
+      letter-spacing: -.02em;
+      background: linear-gradient(90deg, var(--ink), var(--cyan));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .score {
+      color: var(--cyan);
+      font-size: .9rem;
+      font-weight: 500;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+      min-height: 1.4em;
+    }
+
+    .modes {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 18px
+    }
+
+    .chip {
+      font: inherit;
+      font-size: .92rem;
+      font-weight: 500;
+      color: var(--muted);
+      background: var(--card);
+      border: 1px solid var(--stroke);
+      border-radius: 999px;
+      padding: 7px 14px;
+      cursor: pointer;
+      transition: color .15s, border-color .15s, box-shadow .15s;
+    }
+
+    .chip:hover {
+      color: var(--ink);
+      border-color: rgba(139, 125, 255, .5)
+    }
+
+    .chip[aria-pressed="true"] {
+      color: #fff;
+      border-color: transparent;
+      background: linear-gradient(135deg, var(--violet), #6D4BEA);
+      box-shadow: 0 0 16px rgba(139, 92, 246, .55);
+    }
+
+    .chip .jpf {
+      font-weight: 700
+    }
+
+    .card {
+      position: relative;
+      border-radius: 24px;
+      background: linear-gradient(180deg, var(--card-2), var(--card));
+      border: 1px solid var(--stroke);
+      box-shadow: 0 10px 40px rgba(0, 0, 0, .45), inset 0 1px 0 rgba(255, 255, 255, .04);
+      overflow: hidden;
+    }
+
+    .listen {
+      height: 176px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px
+    }
+
+    .play {
+      width: 92px;
+      height: 92px;
+      border-radius: 50%;
+      border: 0;
+      cursor: pointer;
+      color: #fff;
+      display: grid;
+      place-items: center;
+      position: relative;
+      background: linear-gradient(135deg, var(--violet), var(--cyan));
+      box-shadow: 0 0 28px rgba(139, 92, 246, .65), 0 0 60px rgba(34, 230, 208, .25);
+      transition: transform .12s;
+    }
+
+    .play:active {
+      transform: scale(.95)
+    }
+
+    .play svg {
+      width: 38px;
+      height: 38px
+    }
+
+    .play.speaking::after {
+      content: "";
+      position: absolute;
+      inset: -8px;
+      border-radius: 50%;
+      border: 2px solid var(--cyan);
+      animation: ring 1s ease-out infinite;
+    }
+
+    @keyframes ring {
+      from {
+        opacity: .9;
+        transform: scale(.92)
+      }
+
+      to {
+        opacity: 0;
+        transform: scale(1.22)
+      }
+    }
+
+    .hint {
+      margin: 0;
+      color: var(--muted);
+      font-size: .9rem;
+      letter-spacing: .02em
+    }
+
+    .result {
+      border-top: 1px solid var(--stroke);
+      padding: 20px 22px 22px;
+      min-height: 160px;
+      position: relative;
+    }
+
+    .placeholder {
+      color: var(--muted);
+      margin: 26px 0 0;
+      text-align: center
+    }
+
+    .stamp {
+      position: absolute;
+      top: 14px;
+      right: 20px;
+      font-size: 56px;
+      line-height: 1;
+      font-weight: 700;
+      color: var(--cyan);
+      text-shadow: 0 0 18px rgba(34, 230, 208, .8);
+      animation: stamp .22s cubic-bezier(.3, 1.6, .6, 1);
+    }
+
+    .stamp.bad {
+      color: var(--pink);
+      text-shadow: 0 0 18px rgba(255, 77, 157, .8)
+    }
+
+    @keyframes stamp {
+      from {
+        transform: scale(1.6) rotate(-12deg);
+        opacity: 0
+      }
+
+      to {
+        transform: none;
+        opacity: 1
+      }
+    }
+
+    .answer {
+      font-size: clamp(1.9rem, 9vw, 2.7rem);
+      font-weight: 700;
+      letter-spacing: -.01em;
+      font-variant-numeric: tabular-nums;
+      line-height: 1.15;
+      padding-right: 72px;
+      word-break: break-word;
+    }
+
+    .jp {
+      font-size: 1.3rem;
+      font-weight: 700;
+      margin-top: 4px;
+      color: var(--violet);
+      filter: brightness(1.5)
+    }
+
+    .reading {
+      font-size: 1.1rem;
+      color: var(--ink);
+      opacity: .85;
+      margin-top: 6px;
+      line-height: 1.65
+    }
+
+    .yours {
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: .95rem
+    }
+
+    .yours s {
+      text-decoration-thickness: 1.5px;
+      text-decoration-color: var(--pink)
+    }
+
+    .row {
+      display: flex;
+      gap: 10px;
+      margin-top: 18px;
+      align-items: stretch
+    }
+
+    .field {
+      font: inherit;
+      font-size: 1.45rem;
+      font-weight: 500;
+      font-variant-numeric: tabular-nums;
+      color: var(--ink);
+      background: var(--field);
+      border: 1px solid var(--stroke);
+      border-radius: 14px;
+      padding: 12px 16px;
+      min-width: 0;
+      flex: 1;
+      transition: border-color .15s, box-shadow .15s;
+    }
+
+    .field::placeholder {
+      color: var(--muted);
+      opacity: .6;
+      font-size: 1.05rem;
+      font-weight: 400
+    }
+
+    .field:focus {
+      outline: none;
+      border-color: var(--cyan);
+      box-shadow: 0 0 0 3px rgba(34, 230, 208, .18), 0 0 18px rgba(34, 230, 208, .25);
+    }
+
+    .field.empty {
+      border-color: var(--pink);
+      box-shadow: 0 0 0 3px rgba(255, 77, 157, .2)
+    }
+
+    .date {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      flex: 1;
+      min-width: 0
+    }
+
+    .date .field {
+      flex: 1;
+      text-align: center;
+      padding: 12px 6px
+    }
+
+    .date span {
+      color: var(--muted);
+      font-size: 1.3rem
+    }
+
+    .primary {
+      font: inherit;
+      font-weight: 600;
+      font-size: 1rem;
+      border: 0;
+      border-radius: 14px;
+      cursor: pointer;
+      color: #fff;
+      background: linear-gradient(135deg, var(--violet), #6D4BEA);
+      box-shadow: 0 0 20px rgba(139, 92, 246, .5);
+      padding: 0 22px;
+      min-height: 56px;
+      white-space: nowrap;
+      transition: transform .12s;
+    }
+
+    .primary:active {
+      transform: scale(.97)
+    }
+
+    .preview {
+      min-height: 1.6em;
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 1rem
+    }
+
+    .tools {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 2px
+    }
+
+    .link {
+      font: inherit;
+      font-size: .92rem;
+      background: none;
+      border: 0;
+      padding: 6px 0;
+      cursor: pointer;
+      color: var(--muted);
+      text-decoration: underline;
+      text-underline-offset: 3px
+    }
+
+    .link:hover {
+      color: var(--ink)
+    }
+
+    .speed {
+      display: flex;
+      align-items: center;
+      gap: 5px
+    }
+
+    .speed-label {
+      color: var(--muted);
+      font-size: .85rem;
+      margin-right: 2px
+    }
+
+    .speed .chip {
+      padding: 4px 9px;
+      font-size: .82rem;
+      font-variant-numeric: tabular-nums
+    }
+
+    .warn {
+      margin-top: 18px;
+      padding: 12px 14px;
+      border: 1px solid rgba(255, 77, 157, .4);
+      border-left: 3px solid var(--pink);
+      background: rgba(255, 77, 157, .07);
+      border-radius: 0 12px 12px 0;
+      font-size: .9rem;
+    }
+
+    .warn p {
+      margin: 0
+    }
+
+    button:focus-visible {
+      outline: 2px solid var(--cyan);
+      outline-offset: 2px
+    }
+
+    [hidden] {
+      display: none !important
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+
+      .stamp,
+      .play.speaking::after {
+        animation: none
+      }
+    }
+.modes.multi .chip[aria-pressed="true"]{background:linear-gradient(135deg,#6D4BEA,#16B4A4);box-shadow:0 0 14px rgba(34,230,208,.4)}
+    .tag{display:inline-block;margin-top:10px;padding:3px 10px;border-radius:999px;font-size:.82rem;color:var(--pink);border:1px solid rgba(255,77,157,.4);background:rgba(255,77,157,.07)}
+    .tools .left{display:flex;align-items:center;gap:16px}
+    .tabs{display:flex;gap:6px;padding:4px;margin-bottom:16px;background:var(--card);border:1px solid var(--stroke);border-radius:999px}
+    .tab{flex:1;font:inherit;font-size:.95rem;font-weight:600;color:var(--muted);background:none;border:0;border-radius:999px;padding:8px 12px;cursor:pointer;transition:color .15s}
+    .tab[aria-selected="true"]{color:#fff;background:linear-gradient(135deg,var(--violet),#6D4BEA);box-shadow:0 0 16px rgba(139,92,246,.45)}
+    .badge{display:inline-block;min-width:1.5em;margin-left:6px;padding:0 6px;border-radius:999px;background:var(--pink);color:#fff;font-size:.75rem;font-weight:700;line-height:1.5;text-align:center}
+    .tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:6px}
+    .tile{background:var(--field);border:1px solid var(--stroke);border-radius:14px;padding:10px 12px;font-variant-numeric:tabular-nums}
+    .tile b{display:block;font-size:1.5rem;line-height:1.2}
+    .tile span{color:var(--muted);font-size:.8rem}
+    .stats{padding:18px 20px}
+    .stats h2{margin:0 0 10px;font-size:1rem;font-weight:600}
+    .stats h2.next{margin-top:20px}
+    .srow{display:grid;grid-template-columns:96px 1fr auto;align-items:center;gap:10px;margin:8px 0;font-size:.9rem;font-variant-numeric:tabular-nums}
+    .crow{display:grid;grid-template-columns:1fr auto auto;align-items:center;gap:12px;margin:8px 0;font-size:.95rem;font-variant-numeric:tabular-nums}
+    .sbar{height:6px;border-radius:99px;background:var(--field);overflow:hidden}
+    .sbar i{display:block;height:100%;background:linear-gradient(90deg,var(--violet),var(--cyan))}
+    .smuted{color:var(--muted)}
+    .cbad{color:var(--pink);font-weight:600}
+    .cdue{font-size:.75rem;color:var(--pink);border:1px solid rgba(255,77,157,.4);border-radius:999px;padding:1px 8px}
+    .cdone{font-size:.75rem;color:var(--cyan);border:1px solid rgba(34,230,208,.4);border-radius:999px;padding:1px 8px}
+    .stats .note{margin:14px 0 0;color:var(--muted);font-size:.85rem}
+    .stats .link.danger{margin-top:8px}
+    </style>
+</head>
+
+<body>
+  <main class="wrap">
+    <header class="top">
+      <h1>Numbers by Ear</h1>
+      <div class="score" id="score" aria-live="polite"></div>
+    </header>
+
+    <nav class="tabs" id="tabs" role="tablist" aria-label="Section">
+      <button class="tab" role="tab" data-tab="practice" aria-selected="true">Practice</button>
+      <button class="tab" role="tab" data-tab="stats" aria-selected="false">Stats<span class="badge" id="dueBadge" hidden></span></button>
+    </nav>
+
+    <div id="practice" role="tabpanel">
+    <nav class="modes" id="modes" aria-label="Mode"></nav>
+
+    <section class="card">
+      <div class="listen">
+        <button class="play" id="play" aria-label="Listen">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+            stroke-linejoin="round" aria-hidden="true">
+            <path d="M11 5 6 9H2v6h4l5 4V5z" fill="currentColor" />
+            <path d="M15.5 8.5a5 5 0 0 1 0 7" />
+            <path d="M18.5 5.5a9 9 0 0 1 0 13" />
+          </svg>
+        </button>
+        <p class="hint" id="hint">Tap to listen</p>
+      </div>
+      <div class="result" aria-live="polite">
+        <p class="placeholder" id="placeholder"></p>
+        <div id="out" hidden>
+          <div class="stamp jpf" id="stamp"></div>
+          <div class="answer" id="answer"></div>
+          <div class="jp jpf" id="jp"></div>
+          <div class="reading jpf" id="reading" lang="ja"></div>
+          <div class="yours" id="yours"></div>
+          <div class="tag" id="tag" hidden>↻ Review: you missed this one before</div>
+        </div>
+      </div>
+    </section>
+
+    <div class="row">
+      <input class="field" id="num" type="text" inputmode="numeric" autocomplete="off" enterkeyhint="go"
+        placeholder="digits" aria-label="Answer">
+      <div class="date" id="dateRow" hidden>
+        <input class="field" id="mon" type="text" inputmode="numeric" maxlength="2" autocomplete="off"
+          enterkeyhint="next" placeholder="month" aria-label="Month">
+        <span>/</span>
+        <input class="field" id="day" type="text" inputmode="numeric" maxlength="2" autocomplete="off" enterkeyhint="go"
+          placeholder="day" aria-label="Day">
+      </div>
+      <button class="primary" id="act">Check</button>
+    </div>
+    <div class="preview jpf" id="preview"></div>
+    <div class="tools">
+      <div class="left">
+        <button class="link" id="reveal">Show answer</button>
+      </div>
+      <div class="speed" id="speed" role="group" aria-label="Speech speed"></div>
+    </div>
+
+    <div class="warn" id="warn" hidden>
+<p>No Japanese voice found. Install a Japanese voice in your system text-to-speech settings, then restart the app.</p>
+    </div>
+    </div>
+
+    <div id="statsView" role="tabpanel" hidden>
+      <section class="card stats" id="stats"></section>
+    </div>
+  </main>
+
+  <script>
+    (function () {
+      const $ = id => document.getElementById(id);
+      const MODES = [
+        { id: 'd1', html: '0–9' },
+        { id: 'd2', html: '10–99' },
+        { id: 'd3', html: '100–999' },
+        { id: 'man', html: '<span class="jpf">万</span> man' },
+        { id: 'oku', html: '<span class="jpf">億</span> oku' },
+        { id: 'date', html: 'Dates' },
+        { id: 'tel', html: 'Phones' },
+        { id: 'mix', html: 'Mix' }
+      ];
+      const BASE = MODES.filter(m => m.id !== 'mix');
+      const D = ['', 'いち', 'に', 'さん', 'よん', 'ご', 'ろく', 'なな', 'はち', 'きゅう'];
+      const MON = ['', 'いちがつ', 'にがつ', 'さんがつ', 'しがつ', 'ごがつ', 'ろくがつ', 'しちがつ', 'はちがつ', 'くがつ', 'じゅうがつ', 'じゅういちがつ', 'じゅうにがつ'];
+      const DAY = ['', 'ついたち', 'ふつか', 'みっか', 'よっか', 'いつか', 'むいか', 'なのか', 'ようか', 'ここのか', 'とおか',
+        'じゅういちにち', 'じゅうににち', 'じゅうさんにち', 'じゅうよっか', 'じゅうごにち', 'じゅうろくにち', 'じゅうしちにち', 'じゅうはちにち', 'じゅうくにち', 'はつか',
+        'にじゅういちにち', 'にじゅうににち', 'にじゅうさんにち', 'にじゅうよっか', 'にじゅうごにち', 'にじゅうろくにち', 'にじゅうしちにち', 'にじゅうはちにち', 'にじゅうくにち', 'さんじゅうにち', 'さんじゅういちにち'];
+      const MON_EN = ['', 'January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+      const DIM = [0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+      const TEL = { '0': 'ゼロ', '1': 'イチ', '2': 'ニー', '3': 'サン', '4': 'ヨン', '5': 'ゴー', '6': 'ロク', '7': 'ナナ', '8': 'ハチ', '9': 'キュー' };
+      const ALT1 = { 0: 'ゼロ / れい', 4: 'よん / し', 7: 'なな / しち', 9: 'きゅう / く' };
+
+      const SPEEDS = [0.6, 0.8, 1, 1.25, 1.5];
+      let mode = 'd1', item = null, state = 'answering', streak = 0, voice = null, rate = 1;
+      let scores = {};
+      let mixModes = BASE.map(m => m.id);   // which modes the Mix draws from
+      let lastMode = 'd1';                   // single mode to return to when Mix is switched off
+      let cards = {};                        // cards you have missed: key -> { mode, item, wrong, right, weight, last }
+      const MAX_CARDS = 300;
+      try {
+        const saved = JSON.parse(localStorage.getItem('kikitori-nums') || 'null');
+        if (saved) {
+          if (MODES.some(m => m.id === saved.mode)) mode = saved.mode;
+          if (BASE.some(m => m.id === saved.lastMode)) lastMode = saved.lastMode;
+          scores = saved.scores || {};
+          if (SPEEDS.includes(saved.rate)) rate = saved.rate;
+          if (Array.isArray(saved.mixModes)) {
+            const mm = BASE.map(m => m.id).filter(id => saved.mixModes.includes(id));
+            if (mm.length) mixModes = mm;
+          }
+          if (saved.cards && typeof saved.cards === 'object') cards = saved.cards;
+        }
+      } catch (e) { }
+      function save() { try { localStorage.setItem('kikitori-nums', JSON.stringify({ mode, lastMode, scores, rate, mixModes, cards })); } catch (e) { } }
+
+      const rnd = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
+      const pick = arr => arr[rnd(0, arr.length - 1)];
+      function mag(maxDigits) { const d = rnd(1, maxDigits); return d === 1 ? rnd(1, 9) : rnd(10 ** (d - 1), 10 ** d - 1); }
+
+      function under10k(n, big) {
+        const th = Math.floor(n / 1000), h = Math.floor(n % 1000 / 100), t = Math.floor(n % 100 / 10), o = n % 10;
+        let s = '';
+        if (th) s += th === 1 ? (big ? 'いっせん' : 'せん') : th === 3 ? 'さんぜん' : th === 8 ? 'はっせん' : D[th] + 'せん';
+        if (h) s += h === 1 ? 'ひゃく' : h === 3 ? 'さんびゃく' : h === 6 ? 'ろっぴゃく' : h === 8 ? 'はっぴゃく' : D[h] + 'ひゃく';
+        if (t) s += t === 1 ? 'じゅう' : D[t] + 'じゅう';
+        if (o) s += D[o];
+        return s;
+      }
+      function kana(n) {
+        if (n === 0) return 'ゼロ';
+        const o = Math.floor(n / 1e8), m = Math.floor(n % 1e8 / 1e4), r = n % 1e4, parts = [];
+        if (o) parts.push(under10k(o, true) + 'おく');
+        if (m) parts.push(under10k(m, true) + 'まん');
+        if (r) parts.push(under10k(r, false));
+        return parts.join(' ');
+      }
+      function jpGroup(n) {
+        const o = Math.floor(n / 1e8), m = Math.floor(n % 1e8 / 1e4), r = n % 1e4;
+        let s = ''; if (o) s += o + '億'; if (m) s += m + '万'; if (r || !s) s += r; return s;
+      }
+      const fmt = n => n.toLocaleString('en-US');
+
+      function numItem(n, md) {
+        return {
+          kind: 'num', mode: md, value: n, speak: String(n), display: fmt(n),
+          jp: n >= 10000 ? jpGroup(n) : '',
+          reading: (md === 'd1' && ALT1[n]) ? ALT1[n] : kana(n)
+        };
+      }
+
+      // Generates a fresh random card for one concrete mode (never 'mix').
+      function gen(md) {
+        const prev = item;
+        switch (md) {
+          case 'd1': { let n; do { n = rnd(0, 9); } while (prev && prev.kind === 'num' && prev.mode === 'd1' && prev.value === n); return numItem(n, md); }
+          case 'd2': return numItem(rnd(10, 99), md);
+          case 'd3': return numItem(Math.random() < .4 ? pick([3, 6, 8]) * 100 + rnd(0, 99) : rnd(100, 999), md);
+          case 'man': {
+            const m = mag(4), p = Math.random();
+            const r = p < .35 ? 0 : p < .65 ? rnd(1, 9) * 1000 : rnd(0, 9999);
+            return numItem(m * 1e4 + r, md);
+          }
+          case 'oku': {
+            const o = mag(4), p = Math.random();
+            const m = p < .5 ? 0 : Math.random() < .5 ? rnd(1, 9) * 1000 : mag(4);
+            const r = Math.random() < .75 ? 0 : rnd(1, 9999);
+            return numItem(o * 1e8 + m * 1e4 + r, md);
+          }
+          case 'date': {
+            const m = rnd(1, 12);
+            const d = Math.random() < .5 ? pick([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 14, 20, 24]) : rnd(1, DIM[m]);
+            return { kind: 'date', mode: md, m, d, speak: MON[m] + DAY[d], display: m + '月' + d + '日', jp: MON_EN[m] + ' ' + d, reading: MON[m] + ' ' + DAY[d] };
+          }
+          case 'tel': {
+            const p = Math.random(); let groups;
+            const digits = k => Array.from({ length: k }, () => rnd(0, 9)).join('');
+            if (p < .6) groups = [pick(['090', '080', '070']), digits(4), digits(4)];
+            else if (p < .85) groups = ['03', digits(4), digits(4)];
+            else groups = ['0120', digits(3), digits(3)];
+            const k = groups.map(g => [...g].map(c => TEL[c]).join(''));
+            return { kind: 'tel', mode: md, groups, value: groups.join(''), speak: k.join(' の、'), display: groups.join('-'), jp: '', reading: k.join(' の ') };
+          }
+        }
+      }
+
+      // ---- Mistake tracking: cards you miss come back more often until you get them right ----
+      const activeModes = () => mode === 'mix' ? mixModes : [mode];
+      const keyOf = it => it.mode + '|' + it.display;
+
+      function recordResult(it, ok) {
+        const key = keyOf(it);
+        let c = cards[key];
+        if (!ok) {
+          if (!c) {
+            const snap = Object.assign({}, it); delete snap.review;
+            c = cards[key] = { mode: it.mode, item: snap, wrong: 0, right: 0, weight: 0, last: 0 };
+          }
+          c.wrong++; c.weight = Math.min(c.weight + 2, 6); c.last = Date.now();
+        } else if (c) {
+          c.right++; c.weight = Math.max(c.weight - 1, 0); c.last = Date.now();
+        }
+        const keys = Object.keys(cards);
+        if (keys.length > MAX_CARDS) {
+          // drop learned cards first (weight 0), then the least urgent / oldest ones
+          keys.sort((a, b) => cards[a].weight - cards[b].weight || cards[a].last - cards[b].last)
+            .slice(0, keys.length - MAX_CARDS).forEach(k => delete cards[k]);
+        }
+      }
+
+      function nextItem() {
+        const scope = activeModes();
+        const pool = Object.keys(cards).map(k => cards[k]).filter(c =>
+          c.weight > 0 && scope.includes(c.mode) && !(item && keyOf(item) === keyOf(c.item)));
+        // The more cards are waiting for review, the more often one is shown (25% .. 50%).
+        if (pool.length && Math.random() < Math.min(.5, .25 + .05 * pool.length)) {
+          let r = Math.random() * pool.reduce((s, c) => s + c.weight, 0), chosen = pool[pool.length - 1];
+          for (const c of pool) { r -= c.weight; if (r < 0) { chosen = c; break; } }
+          return Object.assign({}, chosen.item, { review: true });
+        }
+        return gen(mode === 'mix' ? pick(mixModes) : mode);
+      }
+
+      function pickVoice() {
+        if (!('speechSynthesis' in window)) { $('warn').hidden = false; return; }
+        const vs = speechSynthesis.getVoices();
+        const ja = vs.filter(v => /^ja/i.test(v.lang));
+        voice = ja.find(v => /Google|Kyoko|O-ren|Otoya|Nanami|Haruka/i.test(v.name)) || ja[0] || null;
+        $('warn').hidden = !(vs.length && !ja.length);
+      }
+      if ('speechSynthesis' in window) {
+        pickVoice();
+        speechSynthesis.onvoiceschanged = pickVoice;
+      } else { $('warn').hidden = false; }
+
+      function speak(text) {
+        if (!('speechSynthesis' in window)) return;
+        try {
+          if (speechSynthesis.speaking || speechSynthesis.pending) speechSynthesis.cancel();
+          const u = new SpeechSynthesisUtterance(text);
+          u.lang = 'ja-JP'; if (voice) u.voice = voice; u.rate = rate;
+          const b = $('play');
+          u.onstart = () => b.classList.add('speaking');
+          u.onend = u.onerror = () => b.classList.remove('speaking');
+          speechSynthesis.speak(u);
+        } catch (e) { }
+      }
+
+      function sc() { return scores[mode] || (scores[mode] = { ok: 0, total: 0 }); }
+      function renderScore() {
+        const s = sc();
+        $('score').textContent = s.total ? `${s.ok} of ${s.total}` + (streak > 1 ? `, streak ${streak}` : '') : '';
+      }
+
+      // One row of chips. Normally it picks a single mode; while Mix is on, the same chips
+      // become on/off toggles for what Mix draws from (no extra row, so the layout never jumps).
+      function renderModes() {
+        const multi = mode === 'mix';
+        $('modes').className = 'modes' + (multi ? ' multi' : '');
+        $('modes').innerHTML = MODES.map(m => {
+          const on = multi ? (m.id === 'mix' || mixModes.includes(m.id)) : m.id === mode;
+          return `<button class="chip" data-mode="${m.id}" aria-pressed="${on}">${m.html}</button>`;
+        }).join('');
+      }
+      $('modes').addEventListener('click', e => {
+        const b = e.target.closest('.chip'); if (!b) return;
+        const id = b.dataset.mode;
+        if (mode === 'mix' && id !== 'mix') {
+          if (mixModes.includes(id)) {
+            if (mixModes.length === 1) return;   // keep at least one mode
+            mixModes = mixModes.filter(x => x !== id);
+          } else mixModes = BASE.map(m => m.id).filter(x => x === id || mixModes.includes(x));
+          save(); renderModes();
+          if (!mixModes.includes(item.mode)) next(true);   // current card belongs to a switched-off mode
+          return;
+        }
+        if (id === 'mix') {
+          if (mode === 'mix') mode = lastMode; else { lastMode = mode; mode = 'mix'; }
+        } else mode = id;
+        streak = 0; save(); renderModes(); next(true);
+      });
+
+      function renderSpeed() {
+        $('speed').innerHTML = '<span class="speed-label">Speed</span>' + SPEEDS.map(s =>
+          `<button class="chip" data-rate="${s}" aria-pressed="${s === rate}">${s}×</button>`).join('');
+      }
+      $('speed').addEventListener('click', e => {
+        const b = e.target.closest('.chip'); if (!b) return;
+        rate = Number(b.dataset.rate); save(); renderSpeed();
+        speak(item.speak); $('hint').textContent = 'Replay';
+        if (state === 'answering') focusInput();
+      });
+
+      // Input layout follows the kind of the current card (matters in Mix, where kinds alternate)
+      function layout() {
+        const isDate = item.kind === 'date';
+        $('num').hidden = isDate; $('dateRow').hidden = !isDate;
+        $('placeholder').textContent = isDate ? 'Type the month and day' : item.kind === 'tel' ? 'Type the phone number' : 'Type the number you heard';
+      }
+      function focusInput() { (item.kind === 'date' ? ($('mon').value ? $('day') : $('mon')) : $('num')).focus(); }
+
+      function next(play) {
+        item = nextItem(); state = 'answering'; layout();
+        $('num').value = ''; $('mon').value = ''; $('day').value = ''; $('preview').textContent = '';
+        $('out').hidden = true; $('placeholder').hidden = false;
+        $('act').textContent = 'Check'; $('reveal').hidden = false;
+        $('hint').textContent = play ? 'Replay' : 'Tap to listen';
+        renderScore();
+        if (play) { speak(item.speak); focusInput(); }
+      }
+
+      function readAnswer() {
+        if (item.kind === 'date') {
+          const m = parseInt($('mon').value, 10), d = parseInt($('day').value, 10);
+          if (!m || !d) return null;
+          return { ok: m === item.m && d === item.d, text: m + '月' + d + '日' };
+        }
+        const digits = $('num').value.replace(/\D/g, '');
+        if (!digits) return null;
+        if (item.kind === 'tel') {
+          let i = 0; const parts = item.groups.map(g => { const s = digits.slice(i, i + g.length); i += g.length; return s; }).filter(Boolean);
+          if (i < digits.length) parts.push(digits.slice(i));
+          return { ok: digits === item.value, text: parts.join('-') };
+        }
+        const n = Number(digits);
+        return { ok: n === item.value, text: fmt(n) };
+      }
+
+      function show(res) {
+        const ok = !!(res && res.ok);
+        // the score is kept for the card's own mode, and also for Mix as a whole
+        [item.mode, ...(mode === 'mix' ? ['mix'] : [])].forEach(id => {
+          const s = scores[id] || (scores[id] = { ok: 0, total: 0 });
+          s.total++; if (ok) s.ok++;
+        });
+        if (ok) streak++; else streak = 0;
+        recordResult(item, ok);
+        save();
+        $('tag').hidden = !item.review;
+        const st = $('stamp');
+        st.textContent = ok ? '◯' : '✕'; st.className = 'stamp jpf' + (ok ? '' : ' bad');
+        void st.offsetWidth; st.style.animation = 'none'; void st.offsetWidth; st.style.animation = '';
+        $('answer').textContent = item.display;
+        $('jp').textContent = item.jp; $('jp').hidden = !item.jp;
+        $('reading').textContent = item.reading;
+        const y = $('yours');
+        if (res && !ok) { y.innerHTML = 'Your answer: <s></s>'; y.querySelector('s').textContent = res.text; y.hidden = false; }
+        else y.hidden = true;
+        $('placeholder').hidden = true; $('out').hidden = false;
+        state = 'revealed'; $('act').textContent = 'Next'; $('reveal').hidden = true;
+        renderScore(); renderBadge();
+      }
+
+      // ---- Statistics tab ----
+      let resetArmed = false, tab = 'practice';
+      const pct = s => s.total ? Math.round(100 * s.ok / s.total) : 0;
+      const dueCount = () => Object.keys(cards).filter(k => cards[k].weight > 0).length;
+      function renderBadge() {
+        const n = dueCount();
+        $('dueBadge').hidden = !n; $('dueBadge').textContent = n;
+      }
+      function setTab(t) {
+        tab = t; resetArmed = false;
+        $('practice').hidden = t !== 'practice'; $('statsView').hidden = t !== 'stats';
+        document.querySelectorAll('#tabs .tab').forEach(b => b.setAttribute('aria-selected', String(b.dataset.tab === t)));
+        if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+        if (t === 'stats') renderStats();
+      }
+      $('tabs').addEventListener('click', e => {
+        const b = e.target.closest('.tab'); if (!b) return;
+        setTab(b.dataset.tab);
+      });
+      function renderStats() {
+        const base = BASE.map(m => scores[m.id]).filter(Boolean);
+        const total = base.reduce((n, s) => n + s.total, 0), right = base.reduce((n, s) => n + s.ok, 0);
+        const rows = BASE.concat(MODES.filter(m => m.id === 'mix')).map(m => {
+          const s = scores[m.id];
+          if (!s || !s.total) return '';
+          return `<div class="srow"><span>${m.html}</span><div class="sbar"><i style="width:${pct(s)}%"></i></div><span>${s.ok}/${s.total} · ${pct(s)}%</span></div>`;
+        }).join('');
+        const label = id => (MODES.find(m => m.id === id) || { html: id }).html;
+        const list = Object.keys(cards).map(k => cards[k]).sort((a, b) => b.weight - a.weight || b.wrong - a.wrong || b.last - a.last).slice(0, 20);
+        const due = dueCount();
+        $('stats').innerHTML =
+          '<div class="tiles">' +
+          `<div class="tile"><b>${total}</b><span>answers</span></div>` +
+          `<div class="tile"><b>${total ? pct({ ok: right, total }) + '%' : '–'}</b><span>correct</span></div>` +
+          `<div class="tile"><b>${due}</b><span>to review</span></div></div>` +
+          '<h2 class="next">Accuracy by mode</h2>' + (rows || '<div class="smuted">No answers yet.</div>') +
+          `<h2 class="next">Your mistakes${due ? ` · ${due} to review` : ''}</h2>` +
+          (list.length ? list.map(c => `<div class="crow"><span class="jpf">${c.item.display}</span><span class="smuted">${label(c.mode)}</span>` +
+            `<span><span class="cbad">✕ ${c.wrong}</span> ${c.weight > 0 ? '<span class="cdue">review</span>' : '<span class="cdone">learned</span>'}</span></div>`).join('')
+            : '<div class="smuted">No mistakes yet.</div>') +
+          '<p class="note">Cards you miss come back more often until you answer them correctly.</p>' +
+          `<button class="link danger" id="resetStats">${resetArmed ? 'Tap again to reset everything' : 'Reset statistics'}</button>`;
+      }
+      $('stats').addEventListener('click', e => {
+        if (e.target.id !== 'resetStats') return;
+        if (!resetArmed) {
+          resetArmed = true; renderStats();
+          setTimeout(() => { if (resetArmed) { resetArmed = false; if (tab === 'stats') renderStats(); } }, 4000);
+          return;
+        }
+        resetArmed = false; scores = {}; cards = {}; streak = 0; save(); renderStats(); renderScore(); renderBadge();
+      });
+
+      function check() {
+        const res = readAnswer();
+        if (!res) {
+          const el = item.kind === 'date' ? (!$('mon').value ? $('mon') : $('day')) : $('num');
+          el.classList.add('empty'); setTimeout(() => el.classList.remove('empty'), 700); el.focus();
+          return;
+        }
+        show(res);
+      }
+
+      $('act').addEventListener('click', () => state === 'answering' ? check() : next(true));
+      $('reveal').addEventListener('click', () => { if (state === 'answering') show(null); });
+      $('play').addEventListener('click', () => { speak(item.speak); $('hint').textContent = 'Replay'; if (state === 'answering') focusInput(); });
+
+      ['num', 'mon', 'day'].forEach(id => $(id).addEventListener('keydown', e => {
+        if (e.key !== 'Enter') return;
+        e.preventDefault();
+        if (id === 'mon' && state === 'answering') { $('day').focus(); return; }
+        $('act').click();
+      }));
+      $('mon').addEventListener('input', () => {
+        const v = $('mon').value.replace(/\D/g, ''); $('mon').value = v;
+        if (v.length === 2 || (v.length === 1 && v !== '1')) $('day').focus();
+      });
+      $('day').addEventListener('input', () => { $('day').value = $('day').value.replace(/\D/g, ''); });
+      $('num').addEventListener('input', () => {
+        const digits = $('num').value.replace(/\D/g, '');
+        if (!digits || item.kind === 'tel') { $('preview').textContent = ''; return; }
+        const n = Number(digits);
+        $('preview').textContent = n >= 10000 ? `= ${jpGroup(n)}   (${fmt(n)})` : n >= 1000 ? fmt(n) : '';
+      });
+
+      renderModes(); renderSpeed(); renderBadge(); next(false);
+    })();
+  </script>
+</body>
+
+</html>
