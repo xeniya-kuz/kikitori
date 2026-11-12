@@ -5,6 +5,8 @@ A listening trainer for Japanese numbers. The app speaks a number in Japanese, y
 ## Features
 
 - **Seven practice modes:** 0–9, 10–99, 100–999, 万 (man, ten thousands), 億 (oku, hundred millions), dates and phone numbers.
+- **Mix mode:** tap **Mix**, then tap the mode chips to switch them on or off (at least one stays on). It uses the same row of chips, so nothing shifts. Tap **Mix** again to go back to your previous mode. The choice is saved.
+- **Mistake tracking:** every wrong answer (or "Show answer") is remembered. Missed cards come back more often (25–50% of the time, depending on how many are waiting) until you answer them correctly. The **Stats** tab shows totals, accuracy per mode and your most-missed cards, with a reset button. A badge on the tab counts the cards waiting for review.
 - **Instant feedback:** a glowing ◯ or ✕, the correct digits, the kana reading, and for large numbers the 万/億 grouping.
 - **Speech speed:** 0.6×, 0.8×, 1×, 1.25× and 1.5×. Changing the speed replays the current number.
 - **Score and streak** per mode, saved between sessions.
@@ -66,6 +68,17 @@ node patch-html.js
 ```
 
 The script also swaps the browser speech call for native speech (`expo-speech`), because Android WebView has no reliable `speechSynthesis`. For the Windows app, run `npm run pack` in `kikitori` instead.
+
+`index.html` in this folder is the editable source of the interface. `html.js` is generated from it, so don't edit `html.js` by hand.
+
+### Lint and typecheck
+
+```
+npm run lint        # expo lint (ESLint with eslint-config-expo)
+npm run typecheck   # tsc --noEmit (strict)
+```
+
+The app entry is `App.tsx`. `html.js` is excluded from linting because it is generated.
 
 ### Build an APK
 
